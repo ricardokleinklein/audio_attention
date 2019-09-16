@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 
 
-TIME = 50
+TIME = 5
 EMBEDDING_SIZE = 128
 HIDDEN_LSTM_SIZE = 128
 LSTM_LAYERS = 3
@@ -31,11 +31,7 @@ def get_args():
 	parser.add_argument(
 		"checkpoint",
 		type=str,
-		help='Path from which restore checkpoint')
-	parser.add_argument(
-		"--audio-sample",
-		type=str,
-		help='Path to an audio file')
+		help='Path to which restore checkpoint from')
 	parser.add_argument(
 		"--disable-cuda",
 		action='store_true',
@@ -52,7 +48,33 @@ def generate_sample(time, embedding_size):
 
 
 class LSTM(nn.Module):
-	# TODO: Description
+	"""Predictive architecture. The model is made of
+	a few layers of uni-directional LSTM layers and a final
+	binary fully-connected layer.
+
+	The output is the probability of an audio clip to generate
+	an increasing attention on the audience. 
+
+	Args:
+		input_size (int): Number of embeddings' features
+		hidden_size (int): Size of the LSTM hidden layers
+		output_size (int): Number of output binary categories (should be 1)
+		num_layers (int): Number of layers
+		device (torch.cuda.device): Processing device GPU/CPU
+
+	Example:
+		>>> # In order to reproduce our published models
+		>>> input_size = 128
+		>>> output_size = 1
+		>>> hidden_size = 128
+		>>> num_layers = 3
+		>>> device = torch.device('cpu')
+		>>> net = LSTM(input_size, hidden_size, output_size, 
+		>>> 	num_layers, device)
+		>>> # Assume a random input embedding `input_emb`
+		>>> prob = net(input_emb)
+	"""
+
 	def __init__(self, 
 		input_size, 
 		hidden_size, 
@@ -105,12 +127,7 @@ if __name__ == "__main__":
 		use_cuda = False
 
 	# Data
-	if args.audio_sample is not None:
-		# TODO: Change to audio sample and logmel generation
-		embedding = np.expand_dims(np.load(args.audio_sample), axis=0)
-		_, TIME, EMBEDDING_SIZE = embedding.shape
-	else:
-		embedding = generate_sample(TIME, EMBEDDING_SIZE)
+	embedding = generate_sample(TIME, EMBEDDING_SIZE)
 
 	# Model
 	model = LSTM(input_size=EMBEDDING_SIZE,
